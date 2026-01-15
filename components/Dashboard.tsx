@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { UserPlan, CheckIn } from '../types';
+import { UserPlan } from '../types';
 import TrainingSection from './TrainingSection';
 import NutritionSection from './NutritionSection';
 import BiomechanicsSection from './BiomechanicsSection';
@@ -25,9 +25,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onUpdateUser, onLogout }) =
     const fetchPerformanceTip = async () => {
       setLoadingTip(true);
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
         
-        const lastCheckIn = user.checkIns[user.checkIns.length - 1];
+        const lastCheckIn = user.checkIns?.[user.checkIns?.length - 1];
         const workoutContext = lastCheckIn 
           ? `O atleta acabou de completar o treino: ${user.weeklySchedule[lastCheckIn.dayIndex]?.focus}.`
           : "O atleta está iniciando o dia.";
@@ -55,10 +55,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onUpdateUser, onLogout }) =
       }
     };
     fetchPerformanceTip();
-  }, [user.currentWeight, user.id, user.checkIns.length]);
+  }, [user.currentWeight, user.id, user.checkIns?.length || 0]);
 
   const progressStats = useMemo(() => {
-    if (user.weightHistory.length < 2) return { velocity: 0, weeksLeft: 'Calculando...' };
+    if (!user.weightHistory || user.weightHistory.length < 2) return { velocity: 0, weeksLeft: 'Calculando...' };
     const start = user.weightHistory[0];
     const latest = user.weightHistory[user.weightHistory.length - 1];
     const diff = start.weight - latest.weight;

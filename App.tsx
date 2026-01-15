@@ -5,6 +5,7 @@ import { UserPlan } from './types';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import AdminDashboard from './components/AdminDashboard';
+import { supabase } from './src/supabaseClient';
 
 const App: React.FC = () => {
   const [allUsers, setAllUsers] = useState<UserPlan[]>(() => {
@@ -18,15 +19,22 @@ const App: React.FC = () => {
     localStorage.setItem('elite-hub-users', JSON.stringify(allUsers));
   }, [allUsers]);
 
-  const handleLogin = (cpf: string) => {
-    const cleanedCpf = cpf.replace(/\D/g, '');
-    const user = allUsers.find(u => u.cpf === cleanedCpf);
-    if (user) {
-      setCurrentUser(user);
+  const handleLogin = async (cpf: string) => {
+    // Primeiro, limpamos o CPF que veio do usuário
+    const cleanedCpf = cpf.replace(/\D/g, ''); 
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('cpf', cleanedCpf)
+      .single();
+
+    if (error || !data) {
+      alert("Usuário não encontrado no sistema ❌");
     } else {
-      alert("Usuário não encontrado");
+      setCurrentUser(data); // Define o usuário vindo do banco!
     }
-  };
+    };
 
   const handleLogout = () => setCurrentUser(null);
 
