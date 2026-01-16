@@ -1,0 +1,14 @@
+# Pastas de dependências
+node_modules/
+.DS_Store
+
+# Arquivos de configuração sensíveis (Segurança!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Pastas de compilação
+dist/
+build/
