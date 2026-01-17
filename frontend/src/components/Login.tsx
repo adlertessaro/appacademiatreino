@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 
 interface LoginProps {
   onLogin: (cpf: string) => void;
+  isLoading: boolean;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, isLoading }) => {
   const [cpf, setCpf] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -52,13 +53,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <button
             type="submit"
             className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-xl transition-all transform active:scale-[0.98] shadow-lg shadow-amber-500/20"
+            disabled={isLoading}
           >
-            ACESSAR TREINO
+            {isLoading ? 'Carregando...' : 'ACESSAR'}
           </button>
         </form>
 
         <div className="text-center pt-4">
-          <p className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Dica: Use o CPF do Usuário 1 (123.456.789-01)</p>
+          <p className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Insira o CPF do aluno</p>
         </div>
       </div>
     </div>

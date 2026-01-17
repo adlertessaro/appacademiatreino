@@ -6,18 +6,30 @@ export async function authRoutes(app: FastifyInstance) {
     const { cpf } = request.body as { cpf: string };
     const cleanedCpf = cpf.replace(/\D/g, '');
 
-    // 1. Buscar o perfil do usuário pelo CPF
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, nome')
-      .eq('cpf', cleanedCpf)
-      .single();
+    // Buscar o perfil do usuário pelo CPF
+  const { data: profile, error: profileError } = await supabase
+  .from('profiles')
+  .select(`
+  id, 
+  name:nome,
+  weeklySchedule:treinos (
+    id,
+    dia_semana,
+    foco,
+    exercicios (
+      nome,
+      series_repeticoes
+    )
+  )
+`)
+  .eq('cpf', cleanedCpf)
+  .single();
 
     if (profileError || !profile) {
       return reply.status(404).send({ error: 'Usuário não encontrado' });
     }
 
-    // 2. Buscar TODOS os vínculos deste usuário nas academias
+    // Buscar TODOS os vínculos deste usuário nas academias
     // Aqui garantimos a privacidade: buscamos apenas onde ele é membro
     const { data: vinculos, error: vinculosError } = await supabase
       .from('academia_membro')
@@ -34,27 +46,67 @@ export async function authRoutes(app: FastifyInstance) {
         )
       `)
       .eq('usuario_cpf', cleanedCpf)
-      .eq('status', 'ativo'); // Só entra se estiver com a mensalidade/vínculo em dia
+      .eq('status', 'ATIVO'); // Só entra se estiver com a mensalidade/vínculo em dia
 
     if (vinculosError || !vinculos || vinculos.length === 0) {
       return reply.status(403).send({ error: 'Você não possui vínculos ativos em nenhuma academia' });
     }
 
-    // LÓGICA DE SELEÇÃO:
-    if (vinculos.length > 1) {
-      // Caso tenha mais de um, enviamos a lista para o Frontend mostrar a tela de escolha
-      return {
-        multipleUnits: true,
-        units: vinculos,
-        profile
-      };
-    }
+    // busca os treinos
+    const { data: treinos, error: treinosError } = await supabase 
+    .from('treinos')
+      .select(`
+        id,
+        perfil_id,
+        academia_id,
+        day:dia_semana,
+        focus:foco,
+        intensity:intensidade,
+        groups:grupos_musculares,
+        exercises:exercicios (
+          name:nome,
+          sets:series_repeticoes,
+          justification:justificativa,
+          technique:tecnica        
+        )
+      `)
+      .eq('perfil_id', profile.id)
 
-    // Caso tenha apenas um, já retornamos os dados da academia ativa
-    return {
-      multipleUnits: false,
-      unit: vinculos[0],
-      profile
-    };
+      if (profileError || !profile) {
+        return reply.status(404).send({ error: 'Usuário não encontrado' });
+      }
+
+      //Busca os checkin
+    const { data: checkIns, error: checkInsError } = await supabase
+    .from('checkins')
+    .select(`
+      id,
+      date:data_registro,
+      weight:peso_registrado,
+      dayIndex:day_index
+    `)
+    .eq('perfil_id', profile.id);
+
+      if (checkInsError) {
+        return reply.status(500).send({ error: 'Erro ao buscar check-ins' });
+      }    
+
+      // LÓGICA DE SELEÇÃO:
+      if (vinculos.length > 1) {
+        // Caso tenha mais de um, enviamos a lista para o Frontend mostrar a tela de escolha
+        return {
+          multipleUnits: true,
+          units: vinculos,
+          profile
+        };
+      }
+
+      return reply.send({
+          user: {
+          ...profile,
+          weeklySchedule: treinos || [],
+          checkIns: checkIns || []
+        }
+        });
   });
 }

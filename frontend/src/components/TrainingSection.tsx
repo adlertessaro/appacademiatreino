@@ -18,7 +18,7 @@ const TrainingSection: React.FC<TrainingSectionProps> = ({ schedule, checkIns, o
     const today = new Date().toISOString().split('T')[0];
     return checkIns.some(c => c.dayIndex === idx && c.date === today);
   };
-
+  console.log("Dados que chegaram:", schedule);
   return (
     <div className="space-y-10">
       <div className="flex items-center justify-between">
@@ -29,7 +29,19 @@ const TrainingSection: React.FC<TrainingSectionProps> = ({ schedule, checkIns, o
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {schedule.map((day, idx) => (
+
+        {schedule.length === 0 ? (
+          // ESTADO VAZIO: Isso aparece quando não há treinos
+          <div className="p-10 border-2 border-dashed border-zinc-800 rounded-[2rem] text-center space-y-3">
+            <div className="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center mx-auto text-zinc-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 3h12l4 6v12H2V9l4-6z"/><path d="M2 9h20"/><path d="M10 13h4"/></svg>
+            </div>
+            <p className="text-zinc-400 font-bold uppercase tracking-tighter">Nenhum treino encontrado</p>
+            <p className="text-zinc-600 text-xs">Parece que você ainda não tem um cronograma nesta unidade. 🏋️‍♂️</p>
+          </div>
+        ) : (
+
+        schedule.map((day, idx) => (
           <div key={idx} className={`bg-zinc-900 border rounded-3xl overflow-hidden shadow-xl transition-all ${isChecked(idx) ? 'border-amber-500/40 opacity-70 bg-zinc-900/50' : 'border-zinc-800'}`}>
             <div className="p-6 bg-zinc-800/30 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800">
               <div className="flex items-center gap-4">
@@ -77,7 +89,8 @@ const TrainingSection: React.FC<TrainingSectionProps> = ({ schedule, checkIns, o
               </div>
             )}
           </div>
-        ))}
+        ))
+      )}
       </div>
 
       {/* Modals remain the same... */}

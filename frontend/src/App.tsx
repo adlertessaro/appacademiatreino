@@ -19,22 +19,45 @@ const App: React.FC = () => {
     localStorage.setItem('elite-hub-users', JSON.stringify(allUsers));
   }, [allUsers]);
 
-  const handleLogin = async (cpf: string) => {
-    // Primeiro, limpamos o CPF que veio do usuário
-    const cleanedCpf = cpf.replace(/\D/g, ''); 
+  // Adicione um novo estado para gerenciar as múltiplas unidades
+const [pendingUnits, setPendingUnits] = useState<any[] | null>(null);
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('cpf', cleanedCpf)
-      .single();
+const [isLoading, setIsLoading] = useState(false);
 
-    if (error || !data) {
-      alert("Usuário não encontrado no sistema ❌");
-    } else {
-      setCurrentUser(data); // Define o usuário vindo do banco!
+const handleLogin = async (cpf: string) => {
+
+  setIsLoading(true); // Ativa o spinner assim que o usuário clica
+
+  try {
+    // Chamamos o SEU servidor Fastify em vez do Supabase direto
+    const response = await fetch('http://localhost:3333/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cpf })
+    });
+
+    const result = await response.json();
+
+    if (result.error) {
+      alert(result.error);
+      return;
     }
-    };
+
+    if (result.multipleUnits) {
+      // Se houver mais de uma, guardamos para mostrar a tela de seleção
+      setPendingUnits(result.units);
+    } else {
+      // Se houver apenas uma, entramos direto
+      setCurrentUser(result.profile);
+      // Aqui você também guardará os dados da academia para o White Label
+      console.log("Academia Ativa:", result.unit.academia);
+    }
+  } catch (err) {
+    alert("Erro ao conectar com o servidor.");
+    } finally {
+    setIsLoading(false); // Desativa o spinner em caso de erro
+  }
+};
 
   const handleLogout = () => setCurrentUser(null);
 
@@ -56,7 +79,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
       <div className="flex-1">
         {!currentUser ? (
-          <Login onLogin={handleLogin} />
+          <Login onLogin={handleLogin} isLoading={isLoading} />
         ) : currentUser.isAdmin ? (
           <AdminDashboard users={allUsers} onUpdateUser={updateUser} onLogout={handleLogout} />
         ) : (

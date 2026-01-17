@@ -1,7 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
-import 'dotenv/config'; // Necessário para o Node ler o arquivo .env
+import 'dotenv/config';
 
-// No Backend, usamos process.env e não import.meta.env
+// ADICIONE ESTAS LINHAS PARA TESTAR:
+console.log("URL Encontrada:", process.env.SUPABASE_URL);
+console.log("Chave Encontrada:", process.env.SUPABASE_ANON_KEY ? "Sim (Protegida)" : "Não");
+
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
 

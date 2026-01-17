@@ -1,7 +1,14 @@
 import fastify from 'fastify';
+import cors from '@fastify/cors';
 import { authRoutes } from './routes/auth';
 
 const app = fastify({ logger: true });
+
+app.register(cors, {
+  origin: true || 'http://localhost:5173',
+  methods: ['GET', 'POST'],
+});
+
 
 // Registra nossas rotas de autenticação
 app.register(authRoutes);
